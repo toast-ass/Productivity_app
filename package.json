@@ -1,0 +1,11 @@
+{
+  "name": "pomodoro-leaf-notebook",
+  "version": "1.0.0",
+  "description": "Minimal web app with Pomodoro, Leaf, and Notebook tools",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx -y serve -l $PORT ."
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

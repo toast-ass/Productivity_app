@@ -264,3 +264,15 @@ function playBeep() {
   osc.start();
   osc.stop(ctx.currentTime + 4.0);
 }
+
+// Custom cursor logic
+const cursor = document.getElementById('cursor');
+if (cursor) {
+  window.addEventListener('mousemove', (e) => {
+    if (cursor.style.opacity === "0" || cursor.style.opacity === "") cursor.style.opacity = "1";
+    cursor.style.left = `${e.clientX}px`;
+    cursor.style.top = `${e.clientY}px`;
+  });
+  document.addEventListener('mouseleave', () => cursor.style.opacity = '0');
+  document.addEventListener('mouseenter', () => cursor.style.opacity = '1');
+}
