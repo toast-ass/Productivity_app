@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pomodoro Calm</title>
+  <style>
+    :root {
+      --bg-color: #050a14;
+      --text-color: #e0e0e0;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --glass-bg: rgba(255, 255, 255, 0.02);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Breathing Animated Background */
+    .breathing-bg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200vw;
+      height: 200vh;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 60%);
+      animation: breathe 25s infinite ease-in-out alternate;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @keyframes breathe {
+      0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+      100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    }
+
+    /* Main Container */
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 900px;
+      max-width: 95vw;
+      height: 600px;
+      max-height: 95vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      padding: 40px;
+      border-radius: 20px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    /* Left - Hourglass */
+    .hourglass-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .hourglass-container {
+      width: 200px;
+      height: 300px;
+      position: relative;
+      transition: transform 1.5s ease-in-out;
+    }
+
+    .hourglass-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .time-display {
+      margin-top: 30px;
+      font-size: 24px;
+      font-weight: 300;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.6);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Right Section */
+    .controls-section {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 30px;
+    }
+
+    /* Notepad */
+    .notepad-container {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .notepad-container label {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .distraction-pad {
+      flex-grow: 1;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-color);
+      padding: 15px;
+      font-family: inherit;
+      font-size: 16px;
+      resize: none;
+      outline: none;
+      transition: border-color 0.3s;
+      line-height: 1.5;
+    }
+
+    .distraction-pad:focus {
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Session Controls */
+    .session-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .session-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .session-info {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .session-selector {
+      background: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .session-selector option {
+      background: var(--bg-color);
+    }
+
+    .btn-group {
+      display: flex;
+    }
+
+    .btn-start {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--text-color);
+      padding: 12px 24px;
+      border-radius: 24px 0 0 24px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .btn-reset {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-left: none;
+      color: var(--text-color);
+      padding: 12px 24px;
+      border-radius: 0 24px 24px 0;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .btn-start:hover, .btn-reset:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Time Inputs */
+    .time-inputs {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      color: var(--text-color);
+      font-size: 18px;
+      margin-bottom: 25px;
+    }
+
+    .time-inputs.below {
+      margin-bottom: 0;
+      margin-top: 25px;
+    }
+
+    .time-inputs input {
+      width: 25px;
+      height: 35px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-color);
+      font-size: 18px;
+      text-align: center;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .time-inputs input:focus {
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .colon {
+      opacity: 0.5;
+    }
+
+    /* Prominent Falling Sand */
+    @keyframes fall {
+      0% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -20; }
+    }
+
+    .sand-falling {
+      stroke-dasharray: 4, 4;
+      animation: fall 0.3s linear infinite;
+      stroke-width: 3;
+    }
+
+    .custom-cursor {
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
+      mix-blend-mode: screen;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="breathing-bg"></div>
+
+  <div class="container">
+    
+    <div class="hourglass-section">
+      <!-- Session Time Boxes -->
+      <div class="time-inputs" id="work-inputs">
+        <input type="text" maxlength="1" value="0">
+        <span class="colon">:</span>
+        <input type="text" maxlength="1" value="2">
+        <input type="text" maxlength="1" value="5">
+        <span class="colon">:</span>
+        <input type="text" maxlength="1" value="0">
+        <input type="text" maxlength="1" value="0">
+      </div>
+
+      <div class="hourglass-container" id="hg-container">
+        <!-- SVG Hourglass -->
+        <svg class="hourglass-svg" viewBox="0 0 100 150">
+          <!-- Glass Outline -->
+          <path d="M 10 5 L 90 5 L 90 10 C 90 40, 60 65, 55 75 C 60 85, 90 110, 90 140 L 90 145 L 10 145 L 10 140 C 10 110, 40 85, 45 75 C 40 65, 10 40, 10 10 Z" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+          
+          <!-- Top Sand Clip Path -->
+          <defs>
+            <clipPath id="top-sand-clip">
+              <!-- Height maps from Y=10 (full) to Y=75 (empty) -->
+              <rect x="0" y="10" width="100" height="65" id="clip-top" />
+            </clipPath>
+            <clipPath id="bottom-sand-clip">
+              <!-- Height maps from Y=140 (full) to Y=140 (empty) and grows UPWARDS -->
+              <rect x="0" y="140" width="100" height="0" id="clip-bottom" />
+            </clipPath>
+          </defs>
+
+          <!-- Top Sand -->
+          <path d="M 10 5 L 90 5 L 90 10 C 90 40, 60 65, 55 75 L 45 75 C 40 65, 10 40, 10 10 Z" fill="rgba(255,255,255,0.7)" clip-path="url(#top-sand-clip)" />
+          
+          <!-- Bottom Sand -->
+          <path d="M 55 75 C 60 85, 90 110, 90 140 L 90 145 L 10 145 L 10 140 C 10 110, 40 85, 45 75 Z" fill="rgba(255,255,255,0.7)" clip-path="url(#bottom-sand-clip)" />
+          
+          <!-- Falling Sand Stream -->
+          <line x1="50" y1="75" x2="50" y2="140" stroke="rgba(255,255,255,0.7)" id="sand-stream" class="sand-falling" style="opacity: 0; transition: opacity 0.3s;" />
+        </svg>
+      </div>
+
+      <!-- Break Time Boxes -->
+      <div class="time-inputs below" id="break-inputs">
+        <input type="text" maxlength="1" value="0">
+        <span class="colon">:</span>
+        <input type="text" maxlength="1" value="0">
+        <input type="text" maxlength="1" value="5">
+        <span class="colon">:</span>
+        <input type="text" maxlength="1" value="0">
+        <input type="text" maxlength="1" value="0">
+      </div>
+
+      <div class="time-display" id="time-display">25:00</div>
+    </div>
+
+    <div class="controls-section">
+      <div class="notepad-container">
+        <label for="distraction-pad">Capture distractions</label>
+        <textarea id="distraction-pad" class="distraction-pad" placeholder="Type here..."></textarea>
+      </div>
+
+      <div class="session-controls">
+        <div class="session-header">
+          <div class="session-info" id="session-info">Session 1 of 4</div>
+          <select class="session-selector" id="session-selector">
+            <option value="1">1 Session</option>
+            <option value="2">2 Sessions</option>
+            <option value="3">3 Sessions</option>
+            <option value="4" selected>4 Sessions</option>
+            <option value="5">5 Sessions</option>
+            <option value="6">6 Sessions</option>
+            <option value="7">7 Sessions</option>
+            <option value="8">8 Sessions</option>
+          </select>
+        </div>
+        <div class="btn-group">
+          <button class="btn-start" id="btn-play-pause">Start</button>
+          <button class="btn-reset" id="btn-reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="custom-cursor" id="cursor"></div>
+
+  <script src="pomodoro.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notebook</title>
+  <link rel="stylesheet" href="notebook.css">
+</head>
+<body>
+  <!-- Background animation container -->
+  <div id="bg-container"></div>
+  
+  <div class="journal-container">
+    <!-- Left: Emotional Journal -->
+    <div class="journal-half">
+      <h2 class="journal-title">Emotional Journal</h2>
+      <div class="entries-scroll" id="emotional-scroll">
+        <!-- Entries injected via JS -->
+      </div>
+      <button class="download-btn" id="btn-dl-emotional">Download Emotional Journal</button>
+    </div>
+    
+    <!-- Right: Productivity Journal -->
+    <div class="journal-half">
+      <h2 class="journal-title">Productivity Journal</h2>
+      <div class="entries-scroll" id="productivity-scroll">
+        <!-- Entries injected via JS -->
+      </div>
+      <button class="download-btn" id="btn-dl-productivity">Download Productivity Journal</button>
+    </div>
+  </div>
+
+  <script src="notebook.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaf</title>
+  <link rel="stylesheet" href="leaf.css">
+</head>
+<body>
+  <!-- Container for the entire tree and leaves -->
+  <div id="tree-container" class="tree-container">
+    <svg id="tree-svg" class="tree-svg" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+  
+  <button id="lets-go-btn" class="lets-go-btn hidden">Lets Go!</button>
+  
+  <!-- Fallback message in case window.close() is blocked -->
+  <div id="close-msg" class="close-msg hidden">You may now close this tab.</div>
+
+  <div class="custom-cursor" id="cursor"></div>
+
+  <script src="leaf.js"></script>
+</body>
+</html>

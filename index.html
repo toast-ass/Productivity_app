@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cursor Gradient & Grey Box</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body,
+    html {
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      overflow: hidden;
+      cursor: none;
+      /* Hide default cursor */
+    }
+
+    /* Apply custom cursor logic to inputs/buttons as well */
+    button,
+    input {
+      cursor: none !important;
+    }
+
+    /* The gradient overlay */
+    .gradient-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      /* Default position center if mouse hasn't moved */
+      --mouse-x: 50%;
+      --mouse-y: 50%;
+      background: radial-gradient(80px circle at var(--mouse-x) var(--mouse-y),
+          rgba(255, 255, 255, 0.2),
+          transparent 80%);
+      z-index: 1;
+    }
+
+    /* The white dot cursor */
+    .custom-cursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 20px;
+      /* ~0.5cm depending on DPI */
+      height: 20px;
+      background-color: white;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      /* Start hidden until mouse moves to prevent weird placement initially */
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    /* The grey box */
+    .grey-box {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      /* 1/4 of the screen implies half width, half height */
+      width: calc(50vw - 60px);
+      height: calc(100vh - 60px);
+      background-color: rgba(80, 80, 80, 0.4);
+      /* Translucent grey */
+      border-radius: 24px;
+      z-index: 2;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      padding: 30px;
+      overflow: hidden;
+    }
+
+    .pie-chart-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      flex-shrink: 0;
+    }
+
+    .pie-chart-svg {
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .progress-circle {
+      transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Header for list & button */
+    .list-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 15px 0;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      height: 2px;
+      background-color: rgba(255, 255, 255, 0.8);
+      flex-grow: 1;
+      border-radius: 2px;
+    }
+
+    .add-task-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s, transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .add-task-btn:hover {
+      background: white;
+      color: black;
+      transform: scale(1.1);
+    }
+
+    .todo-list {
+      flex-grow: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding-right: 15px;
+    }
+
+    /* Custom Scrollbar */
+    .todo-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .todo-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+    }
+
+    .todo-list::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      color: white;
+      font-size: 18px;
+      font-family: sans-serif;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .todo-item:hover {
+      background: white;
+      color: black;
+    }
+
+    .todo-item span {
+      flex-grow: 1;
+    }
+
+    .todo-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    /* Cross out completed items */
+    .todo-item input[type="checkbox"]:checked+span {
+      text-decoration: line-through;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .todo-item:hover input[type="checkbox"]:checked+span {
+      color: rgba(0, 0, 0, 0.5);
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: 24px;
+      line-height: 1;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+      padding: 0 5px;
+    }
+
+    .delete-btn:hover {
+      opacity: 1;
+    }
+
+    /* Right side buttons container */
+    .right-buttons {
+      position: absolute;
+      right: 30px;
+      top: 30px;
+      bottom: 30px;
+      left: calc(50vw + 30px);
+      display: grid;
+      grid-template-columns: 50px 50px;
+      grid-template-rows: 50px 50px;
+      gap: 100px;
+      align-content: center;
+      justify-content: center;
+    }
+
+    .image-btn {
+      width: 100px;
+      height: 100px;
+      background-color: rgba(232, 226, 226, 0.4);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      transition: background 0.3s, transform 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .image-btn:hover {
+      background: white;
+      transform: scale(1.02);
+    }
+
+    .image-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      /* Default: Invert black lines to white, screen removes black backgrounds */
+      filter: invert(1);
+      mix-blend-mode: screen;
+      transition: filter 0.3s, mix-blend-mode 0.3s;
+      pointer-events: none;
+    }
+
+    .image-btn:hover img {
+      /* Hover: Normal black lines, multiply removes white backgrounds */
+      filter: none;
+      mix-blend-mode: multiply;
+    }
+
+    #leaves-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .leaf-particle {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: rgb(234, 0, 255);
+      pointer-events: none;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+      /* Leaf shape (rounded opposite corners), specific values applied in JS */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="gradient-bg" id="gradient"></div>
+  <div id="leaves-container"></div>
+  <div class="grey-box">
+    <div class="pie-chart-container">
+      <svg width="150" height="150" class="pie-chart-svg">
+        <circle cx="75" cy="75" r="37.5" stroke="rgba(255,255,255,0.1)" stroke-width="75" fill="none" />
+        <circle cx="75" cy="75" r="37.5" stroke="white" stroke-width="75" fill="none" stroke-dasharray="235.619"
+          stroke-dashoffset="235.619" class="progress-circle" transform="rotate(-90 75 75)" id="progress-circle" />
+      </svg>
+    </div>
+
+    <div class="list-header">
+      <div class="divider"></div>
+      <button class="add-task-btn" id="add-task-btn">+</button>
+    </div>
+
+    <div class="todo-list" id="todo-list">
+      <!-- Items generated by JS -->
+    </div>
+  </div>
+
+  <div class="right-buttons">
+    <button class="image-btn" onclick="window.location.href='pomodoro.html'"><img src="images/clock.png" alt="Clock"></button>
+    <button class="image-btn" onclick="window.open('notebook.html', '_blank')"><img src="images/notebook.png" alt="Notebook"></button>
+    <button class="image-btn" onclick="window.open('leaf.html', '_blank')"><img src="images/leaf.png" alt="Leaf"></button>
+    <button class="image-btn" onclick="window.open('https://calendar.google.com', '_blank')"><img src="images/calendar.png" alt="Calendar"></button>
+  </div>
+
+  <div class="custom-cursor" id="cursor"></div>
+
+  <script>
+    const gradient = document.getElementById('gradient');
+    const cursor = document.getElementById('cursor');
+
+    window.addEventListener('mousemove', (e) => {
+      const x = e.clientX;
+      const y = e.clientY;
+
+      // Show cursor after first move
+      if (cursor.style.opacity === "0" || cursor.style.opacity === "") {
+        cursor.style.opacity = "1";
+      }
+
+      // Update cursor position
+      cursor.style.left = `${x}px`;
+      cursor.style.top = `${y}px`;
+
+      // Update gradient position
+      gradient.style.setProperty('--mouse-x', `${x}px`);
+      gradient.style.setProperty('--mouse-y', `${y}px`);
+    });
+
+    // Hide cursor when leaving the window
+    document.addEventListener('mouseleave', () => {
+      cursor.style.opacity = '0';
+      gradient.style.opacity = '0';
+    });
+
+    document.addEventListener('mouseenter', () => {
+      cursor.style.opacity = '1';
+      gradient.style.opacity = '1';
+    });
+
+    // Todo List Logic
+    const defaultTasks = [
+      { id: 1, text: "Design the layout", completed: true },
+      { id: 2, text: "Add pie chart progress", completed: true },
+      { id: 3, text: "Implement todo list", completed: false },
+      { id: 4, text: "Make the list scrollable", completed: false }
+    ];
+
+    let tasks = JSON.parse(localStorage.getItem('todoTasks'));
+    if (!tasks) {
+      tasks = defaultTasks;
+    }
+
+    function saveTasks() {
+      localStorage.setItem('todoTasks', JSON.stringify(tasks));
+    }
+
+    const todoListElement = document.getElementById('todo-list');
+    const progressCircle = document.getElementById('progress-circle');
+    const CIRCUMFERENCE = 235.619;
+
+    function updatePieChart() {
+      const total = tasks.length;
+      const completed = tasks.filter(t => t.completed).length;
+      const progress = total === 0 ? 0 : (completed / total);
+
+      const offset = CIRCUMFERENCE - (progress * CIRCUMFERENCE);
+      progressCircle.style.strokeDashoffset = offset;
+    }
+
+    function renderTasks() {
+      todoListElement.innerHTML = '';
+      tasks.forEach(task => {
+        const el = document.createElement('label');
+        el.className = 'todo-item';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = task.completed;
+        checkbox.addEventListener('change', (e) => {
+          task.completed = e.target.checked;
+          saveTasks();
+          updatePieChart();
+        });
+
+        const span = document.createElement('span');
+        span.textContent = task.text;
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete-btn';
+        delBtn.innerHTML = '&times;';
+        delBtn.addEventListener('click', (e) => {
+          e.preventDefault(); // prevent toggling the label checkbox
+          tasks = tasks.filter(t => t.id !== task.id);
+          saveTasks();
+          renderTasks();
+        });
+
+        el.appendChild(checkbox);
+        el.appendChild(span);
+        el.appendChild(delBtn);
+        todoListElement.appendChild(el);
+      });
+      updatePieChart();
+    }
+
+    document.getElementById('add-task-btn').addEventListener('click', () => {
+      const text = prompt("Enter new task name:");
+      if (text && text.trim()) {
+        tasks.push({
+          id: Date.now(),
+          text: text.trim(),
+          completed: false
+        });
+        saveTasks();
+        renderTasks();
+      }
+    });
+
+    // Initial render
+    renderTasks();
+
+    // Cherry Blossom / Leaf Particles Logic
+    const leavesContainer = document.getElementById('leaves-container');
+    const NUM_LEAVES = 40;
+    const leaves = [];
+
+    for (let i = 0; i < NUM_LEAVES; i++) {
+      const leaf = document.createElement('div');
+      leaf.className = 'leaf-particle';
+
+      // Random starting positions
+      let x = Math.random() * window.innerWidth * 1.5;
+      let y = Math.random() * window.innerHeight * 1.5 - (window.innerHeight * 0.5);
+
+      let angle = Math.random() * 360;
+      let size = Math.random() * 8 + 6; // 6 to 14px size
+      let opacity = Math.random() * 0.4 + 0.2; // 0.2 to 0.6 opacity
+
+      leaf.style.width = `${size}px`;
+      leaf.style.height = `${size}px`;
+      leaf.style.opacity = opacity;
+      // Leaf shape via border-radius
+      leaf.style.borderRadius = `0 ${size}px 0 ${size}px`;
+
+      leavesContainer.appendChild(leaf);
+
+      leaves.push({
+        element: leaf,
+        x: x,
+        y: y,
+        angle: angle,
+        // Drift from top-right to bottom-left
+        vx: -(Math.random() * 0.6 + 0.4),
+        vy: (Math.random() * 0.6 + 0.4),
+        // Brownian motion params
+        phaseX: Math.random() * Math.PI * 2,
+        phaseY: Math.random() * Math.PI * 2,
+        speedX: Math.random() * 0.03 + 0.01,
+        speedY: Math.random() * 0.03 + 0.01,
+        rotSpeed: (Math.random() - 0.5) * 2
+      });
+    }
+
+    function animateLeaves() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      leaves.forEach(leaf => {
+        // Calculate Brownian wiggle using sine waves
+        leaf.phaseX += leaf.speedX;
+        leaf.phaseY += leaf.speedY;
+        let brownianX = Math.sin(leaf.phaseX) * 1.5;
+        let brownianY = Math.cos(leaf.phaseY) * 1.5;
+
+        // Update positions with drift + brownian motion
+        leaf.x += leaf.vx + brownianX;
+        leaf.y += leaf.vy + brownianY;
+        leaf.angle += leaf.rotSpeed;
+
+        // If leaf goes off-screen to the bottom-left, recycle it to the top-right
+        if (leaf.x < -50 || leaf.y > height + 50) {
+          leaf.x = width + 50 + Math.random() * 200;
+          leaf.y = -50 - Math.random() * 200;
+        }
+
+        leaf.element.style.transform = `translate(${leaf.x}px, ${leaf.y}px) rotate(${leaf.angle}deg)`;
+      });
+
+      requestAnimationFrame(animateLeaves);
+    }
+
+    // Start animation loop
+    animateLeaves();
+  </script>
+</body>
+
+</html>
